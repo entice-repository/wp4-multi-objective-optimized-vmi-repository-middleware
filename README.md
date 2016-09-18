@@ -95,7 +95,8 @@ Step 12. To check the accessibility of this service : Import project RepoGuardCl
 Step 13. Make sure, WebServicesrepo.war is deployed properly and can be accessible through web browser.
 
 Step 14. In order to integrated the whole entice module, specifically with knoweledge base, VMI Optimizer, 
-         and User side GUI and backend : Follow the steps presented within entice-repository/wp5-kb-backend-api/)
+         and User side GUI and backend : Follow the steps presented within entice-repository/wp5-kb-backend-api/
+         repository.
 
 
 
