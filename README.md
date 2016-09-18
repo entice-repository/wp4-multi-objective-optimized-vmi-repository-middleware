@@ -5,7 +5,7 @@ This is an Individual work package of Entice Repository Middleware with various 
 2. VMI Location Tracking.
 3. Applying Multi-objective optimization
 4. Querying the storage node details attached to ENTICE VMI Repository
-5. Querying the container details at a particular Storage Node using its ID
+5. Querying the S3 container/bucket details at a particular Storage Node using its ID
 6. Querying the VM Images details stored at storage node inside a particular container/bucket.
 
 
