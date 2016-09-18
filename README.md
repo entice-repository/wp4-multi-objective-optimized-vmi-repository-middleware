@@ -100,4 +100,7 @@ Step 14. In order to integrated the whole entice module, specifically with knowe
 
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> dca921220de39248d8e4b3a759c7e7b9e6657817
