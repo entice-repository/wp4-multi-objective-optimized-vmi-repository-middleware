@@ -87,7 +87,8 @@ Step 12. To check the accessibility of this service : Import project RepoGuardCl
 	       (c) Now from terminal run : 
 	       wsimport -keep http://(serverEndpointurl):(PortNumber)/WebServicesRepo/add?wsdl .
 
-	       (d) This will download all the necessary server modules and apis into the /RepoGuardClients/src/com/vmrepository/.
+	       (d) This will download all the necessary server modules and apis 
+	       into the /RepoGuardClients/src/com/vmrepository/.
 
 	       (e) Finally, use the individual RepoGuard Client files for individual funtionality testing.
 
