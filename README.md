@@ -102,4 +102,4 @@ Step 14. In order to integrated the whole entice module, specifically with knowe
 
 
 
-Step 15. In case of any issues : mail me at : nishant (at )dps.uibk.ac.at
+Step 15. In case of any issues : mail me at : nishant ( at ) dps.uibk.ac.at
