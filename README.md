@@ -64,7 +64,7 @@ Step 7. Further, just for authentication purpose of this service, a sample hashe
 Step 8. Just to recap: the Resources folder must be stored in the folder where TOMCAT folder exists.
 
 Step 9. Remember, the war file we generated. Copy this war file WebServicesRepo.war inside webapps folder 
-        of TOMCAt(/tomcat/webapps). 
+        of TOMCAT(/tomcat/webapps). 
 
 Step 10. Deploy this war file by using start script provided by Tomcat installation. Check the deployment 
          tutorials of Tomcat, to change the server settings for the ports and endpoints at which this service 
@@ -102,4 +102,4 @@ Step 14. In order to integrated the whole entice module, specifically with knowe
 
 
 
-Step 15. In case of any issues : mail me at : nishant@dps.uibk.ac.at
+Step 15. In case of any issues : mail me at : nishant (at )dps.uibk.ac.at
