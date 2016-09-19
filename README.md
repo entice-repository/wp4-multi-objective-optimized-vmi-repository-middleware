@@ -88,9 +88,11 @@ Step 12. To check the accessibility of this service : Import project RepoGuardCl
 	           wsimport -keep http://(serverEndpointurl):(PortNumber)/WebServicesRepo/add?wsdl .
 
 	       (d) This will download all the necessary server modules and apis 
-	           into the /RepoGuardClients/src/com/vmrepository/.
+	           into the /RepoGuardClients/src/com/vmrepository/repoguardwebserver.
 
-	       (e) Finally, use the individual RepoGuard Client files for individual funtionality testing.
+	       (e) Finally, use the individual RepoGuard Client files from   
+	       	   /RepoGuardClients/src/com/vmrepository/RepoGuardClientFuntionalities for individual
+	           funtionality testing.
 
 Step 13. Make sure, WebServicesRepo.war is deployed properly and can be accessible through web browser.
 
@@ -100,7 +102,4 @@ Step 14. In order to integrated the whole entice module, specifically with knowe
 
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> dca921220de39248d8e4b3a759c7e7b9e6657817
+Step 15. In case of any issues : mail me at : nishant@dps.uibk.ac.at
