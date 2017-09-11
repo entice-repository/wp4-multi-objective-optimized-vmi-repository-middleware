@@ -58,6 +58,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -74,7 +75,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -107,7 +108,11 @@ public class AddVMIImplementation implements AddVMI{
 	static final String STAGEI="stageI";
 	static final String STAGEII="stageII";
 	
-	static {PropertyConfigurator.configure("./Resources/log/log4j.properties"); }
+	static final String STAGEIF="fragmentUpload";
+	static final String STAGEIIUpdated="redistributeOPT";
+	static final String ASSEMBLY="Assembly";
+	
+	static {PropertyConfigurator.configure("../../Resources/log/log4j.properties"); }
 	
 	static Logger logger__=Logger.getLogger(AddVMIImplementation.class);
 	
@@ -128,7 +133,7 @@ public class AddVMIImplementation implements AddVMI{
 	
 	@Override
 	@WebMethod
-	public boolean optDistribute(String stage){
+	public boolean optDistribute(String stage, String fragmentIDRedistribute){
 		boolean result = false;
 		
 		
@@ -136,7 +141,9 @@ public class AddVMIImplementation implements AddVMI{
 		
 		try{
 			logger__.info("Multi-objective Optimization started");
-			mo.moExecute_runtime(stage);
+			
+			mo.moExecute_runtime(stage, fragmentIDRedistribute);
+			
 			result = true;
 			logger__.info("Multi-objective Optimization finished");
 		}catch(Exception e){
@@ -159,7 +166,7 @@ public class AddVMIImplementation implements AddVMI{
 	public ArrayList<String> StorageNodes() throws FileNotFoundException, IOException{
 				
 		MessageContext mctx = wsctx.getMessageContext();		
-		Map http_headers = (Map) mctx.get(MessageContext.HTTP_REQUEST_HEADERS);
+		Map http_headers = (Map) mctx.get(MessageContext.HTTP_REQUEST_HEADERS);	
 			
 		List<String> userLists = (List) http_headers.get("Username");
 		List<String> passLists = (List) http_headers.get("Password");
@@ -191,7 +198,7 @@ public class AddVMIImplementation implements AddVMI{
 			
 			logger__.info(cal.getTime() + " :  " + username + " " + "enquiring information about storage nodes." );
 			
-			props.load(new FileInputStream("./Resources/Credentials/S3Credentials.properties"));
+			props.load(new FileInputStream("../../Resources/Credentials/S3Credentials.properties"));
 			
 			Map<String,String> db = new HashMap<String,String>();
 			
@@ -417,7 +424,7 @@ public class AddVMIImplementation implements AddVMI{
 			
 		}
 		
-		String vmiBucketName = username.toLowerCase() + "-entice";
+		String vmiBucketName = username.toLowerCase()+ "-entice";
 		
 		
 		if(Authenticate(username,password)){
@@ -493,7 +500,7 @@ public class AddVMIImplementation implements AddVMI{
 	
 	
 	/*
-	 * <<< A Web-method to facilitate upload of optimized images.>>>
+	 * <<< A Web-method to facilitate upload of unoptimized images via URI.>>>
 	 * <<< Returns a list : with new storage node ID, VM-Image name, Bucket name and new URI corresponding to uploaded optimized VMI.>>>
 	 * @author : nishant.dps.uibk.ac.at
 	 */
@@ -542,7 +549,118 @@ public class AddVMIImplementation implements AddVMI{
 			
 			System.out.println("User Valid");	
 						
-			downloadVMIViaURI(uri, new File("./Resources/UPLOAD/" + vmImageNameNew));
+			downloadVMIViaURI(uri, new File("../../Resources/UPLOAD/" + vmImageNameNew));
+			
+			
+							
+			logger__.info(cal.getTime() + " :  " + username + " " + "initiated uploading optimized Image  " + vmImageNameNew +"   in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeIdNew  );
+			uploadVMIAsObjectStorage(nodeIdNew, vmImageNameNew, vmiBucketName);
+			
+			elapsedTime = (new Date()).getTime() - startTime;
+			long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime);
+				
+			if(repoS3.checkifVMIExists(vmiBucketName, vmImageNameNew)){
+					
+					logger__.info(cal.getTime() + " :  " + username + " " + "uploaded optimized Image  " + vmImageNameNew +"   successfully in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeIdNew  );
+					
+					vmiURI = repoS3.getFileURI(vmiBucketName, vmImageNameNew);
+					
+					
+					obj.put("StorageNodeId", nodeIdNew);				
+			    	obj.put("vmiName", vmImageNameNew);
+			    	obj.put("bucketName", vmiBucketName);
+			    	obj.put("vmiURI", vmiURI);
+			    	obj.put("UploadOptimizedTimeInSeconds", timeSeconds);
+			    	
+			    	arr.add(obj);
+			    	
+			    	if(arr!=null){
+			    		for(int i = 0; i<arr.size();i++){
+				  	  		list.add(arr.get(i).toString());
+				  	  	}
+					}
+				}
+				
+				else{
+					
+					logger__.error(cal.getTime() + " :  " + username + " " + "Failed uploading optimized Image  " + vmImageNameNew +"   in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeIdNew );
+			    	String response = "Upload of Optimized VMI Failed : Please try again ! The problem has been detected and reported.";
+			    	obj.put("VMIUploadResponse", response);
+			    	arr.add(obj);
+			    	
+			    	if(arr!=null){
+			    		for(int i = 0; i<arr.size();i++){
+				  	  		list.add(arr.get(i).toString());
+				  	  	}
+					}
+			    	
+			    }
+					    	
+		    	cleanVMI(vmImageNameNew);
+			
+			
+		}
+		
+		else{
+			System.out.println("User Invalid");
+		}
+				
+		
+		logger__.info(cal.getTime() + " :  " + username + " " + "uploade response of optimized Image  " + vmImageNameNew + "  at storage node" + " " + nodeIdNew + "" + "withi values" + list);
+		return list;
+		
+	}
+	
+	/*
+	 * <<< A Web-method to facilitate upload of optimized images via URI.>>>
+	 * <<< Returns a list : with new storage node ID, VM-Image name, Bucket name and new URI corresponding to uploaded optimized VMI.>>>
+	 * @author : nishant.dps.uibk.ac.at
+	 */
+	
+	@Override
+	@WebMethod
+	public ArrayList<String> uploadOptimizedVMImage(URI uri, String vmImageNameOld, String vmImageNameNew, String nodeIdOld, String nodeIdNew) throws FileNotFoundException, IOException, URISyntaxException{
+		
+		
+		
+		MessageContext mctx = wsctx.getMessageContext();		
+		Map http_headers = (Map) mctx.get(MessageContext.HTTP_REQUEST_HEADERS);
+			
+		List<String> userLists = (List) http_headers.get("Username");
+		List<String> passLists = (List) http_headers.get("Password");
+		
+		String username = "";
+		String password = "";
+		
+		URI vmiURI;
+		
+		JSONObject obj = new JSONObject();   	 
+    	JSONArray arr = new JSONArray();
+		
+		ArrayList<String> list = new ArrayList<String>();
+		
+			
+		if(userLists != null){
+			username = userLists.get(0);
+			
+		}
+		
+		if(passLists != null){
+			password = passLists.get(0);
+			
+		}
+		
+		String vmiBucketName = username.toLowerCase() + "-entice";
+		
+
+		if(Authenticate(username,password)){
+			
+			long startTime = System.currentTimeMillis();
+	        long elapsedTime = 0L ;
+			
+			System.out.println("User Valid");	
+						
+			downloadVMIViaURI(uri, new File("../../Resources/UPLOAD/" + vmImageNameNew));
 			
 			
 							
@@ -605,6 +723,464 @@ public class AddVMIImplementation implements AddVMI{
 	}
 	
 	
+	/*
+	 * <<< A Web-method to facilitate upload of image fragments from local storage.>>>
+	 * <<< Returns a list : with new storage node ID, VM-Image name, Bucket name and new URI corresponding to uploaded optimized VMI.>>>
+	 * @author : nishant.dps.uibk.ac.at
+	 */
+	
+	
+	@Override
+	@WebMethod	
+	public ArrayList<String> receiveVMImageFragments(byte[] vmImage, String vmImageName, int bytesRead, long vmiLength, String nodeId) throws FileNotFoundException, IOException, URISyntaxException  {
+				
+		MessageContext mctx = wsctx.getMessageContext();		
+		Map http_headers = (Map) mctx.get(MessageContext.HTTP_REQUEST_HEADERS);
+			
+		List<String> userLists = (List) http_headers.get("Username");
+		List<String> passLists = (List) http_headers.get("Password");
+		
+		String username = "";
+		String password = "";
+		
+		URI vmiURI;
+		 
+		
+		JSONObject obj = new JSONObject();   	 
+    	JSONArray arr = new JSONArray();
+    	
+    	ArrayList<String> list = new ArrayList<String>();
+		
+		int sizeStatus = bytesRead;
+		
+		if(userLists != null){
+			username = userLists.get(0);
+			
+		}
+		
+		if(passLists != null){
+			password = passLists.get(0);
+			
+		}
+		
+		String vmiBucketName = username.toLowerCase() + "-entice";
+		
+		
+		if(Authenticate(username,password)){
+			
+			long startTime = System.currentTimeMillis();
+	        long elapsedTime = 0L ;
+			
+			System.out.println("User Valid");
+			long r = upload( vmImage,  vmImageName,  bytesRead);
+			System.out.println("The file length is :" + r);
+			
+			if(r==vmiLength){
+				
+							
+				logger__.info(cal.getTime() + " :  " + username + " " + "initiated uploading Unoptimized Image" +  " " + vmImageName + " " +  " in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeId  );
+				
+				uploadVMIAsObjectStorage(nodeId, vmImageName, vmiBucketName);
+				
+				elapsedTime = (new Date()).getTime() - startTime;
+				long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime);
+				
+			    if(repoS3.checkifVMIExists(vmiBucketName, vmImageName)){
+			    	
+			    	logger__.info(cal.getTime() + " :  " + username + " " + "uploaded Unoptimized Image" + " " + vmImageName + " " +  " successfully, in bucket"  + " " + vmiBucketName  + "  at storage node" + " " + nodeId  );
+			    	vmiURI = repoS3.getFileURI(vmiBucketName, vmImageName);
+			    	
+			
+					obj.put("StorageNodeId", nodeId );				
+			    	obj.put("vmiFragmentName", vmImageName);
+			    	obj.put("bucketName", vmiBucketName);
+			    	obj.put("vmiFragmentURI", vmiURI);
+			    	obj.put("UploadFragmentTimeInSeconds", timeSeconds);
+			    	
+			    	arr.add(obj);
+			    	
+			    	if(arr!=null){
+			    		for(int i = 0; i<arr.size();i++){
+				  	  		list.add(arr.get(i).toString());
+				  	  	}
+					}
+			    	
+			    	
+			    }
+			    
+			    else{
+			    	
+			    	logger__.error(cal.getTime() + " : " + username + "  failed uploading Unoptimized Image" + " " + vmImageName + "  at " + "Storage Node" + nodeId);
+			    	String response = "Upload of VMI Failed : Please try again ! The problem has been detected and reported.";
+			    	obj.put("VMIUploadResponse", response);
+			    	arr.add(obj);
+			    	
+			    	if(arr!=null){
+			    		for(int i = 0; i<arr.size();i++){
+				  	  		list.add(arr.get(i).toString());
+				  	  	}
+					}
+			    	
+			    }
+			
+		    	cleanVMI(vmImageName);
+			}
+			
+		}
+		
+		else{
+			System.out.println("User Invalid");
+		}
+				
+		logger__.info(cal.getTime() + " :  " + username + " " + "upload response of Unoptimized Image" + " " + vmImageName + " " +  "  at storage node" + " " + nodeId + "" + "with values" + list );		
+		return list;
+	}
+	
+	/*
+	 * <<< A Web-method to facilitate upload of image fragments via URI.>>>
+	 * <<< Returns a list : with new storage node ID, VM-Image name, Bucket name and new URI corresponding to uploaded optimized VMI.>>>
+	 * @author : nishant.dps.uibk.ac.at
+	 */
+	
+	
+	@Override
+	@WebMethod
+	public ArrayList<String> receiveVMImageFragmentsviaURI(URI uri, String vmImageNameNew, String nodeIdOld, String nodeIdNew) throws FileNotFoundException, IOException, URISyntaxException{
+		
+		
+		
+		MessageContext mctx = wsctx.getMessageContext();		
+		Map http_headers = (Map) mctx.get(MessageContext.HTTP_REQUEST_HEADERS);
+			
+		List<String> userLists = (List) http_headers.get("Username");
+		List<String> passLists = (List) http_headers.get("Password");
+		
+		String username = "";
+		String password = "";
+		
+		URI vmiURI;
+		
+		JSONObject obj = new JSONObject();   	 
+    	JSONArray arr = new JSONArray();
+		
+		ArrayList<String> list = new ArrayList<String>();
+		
+			
+		if(userLists != null){
+			username = userLists.get(0);
+			
+		}
+		
+		if(passLists != null){
+			password = passLists.get(0);
+			
+		}
+		
+		String vmiBucketName = username.toLowerCase() + "-entice";
+		
+
+		if(Authenticate(username,password)){
+			
+			long startTime = System.currentTimeMillis();
+	        long elapsedTime = 0L ;
+			
+			System.out.println("User Valid");	
+						
+			downloadVMIViaURI(uri, new File("../../Resources/UPLOAD/" + vmImageNameNew));
+			
+			
+							
+			logger__.info(cal.getTime() + " :  " + username + " " + "initiated uploading optimized Image  " + vmImageNameNew +"   in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeIdNew  );
+			uploadVMIAsObjectStorage(nodeIdNew, vmImageNameNew, vmiBucketName);
+			
+			elapsedTime = (new Date()).getTime() - startTime;
+			long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime);
+				
+			if(repoS3.checkifVMIExists(vmiBucketName, vmImageNameNew)){
+					
+					logger__.info(cal.getTime() + " :  " + username + " " + "uploaded optimized Image  " + vmImageNameNew +"   successfully in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeIdNew  );
+					
+					vmiURI = repoS3.getFileURI(vmiBucketName, vmImageNameNew);
+					
+					
+					obj.put("StorageNodeId", nodeIdNew);				
+			    	obj.put("vmiFragmentName", vmImageNameNew);
+			    	obj.put("bucketName", vmiBucketName);
+			    	obj.put("vmiFragmentURI", vmiURI);
+			    	obj.put("UploadFragmentTimeInSeconds", timeSeconds);
+			    	
+			    	arr.add(obj);
+			    	
+			    	if(arr!=null){
+			    		for(int i = 0; i<arr.size();i++){
+				  	  		list.add(arr.get(i).toString());
+				  	  	}
+					}
+				}
+				
+				else{
+					
+					logger__.error(cal.getTime() + " :  " + username + " " + "Failed uploading optimized Image  " + vmImageNameNew +"   in bucket" + " " + vmiBucketName  + "  at storage node" + " " + nodeIdNew );
+			    	String response = "Upload of Optimized VMI Failed : Please try again ! The problem has been detected and reported.";
+			    	obj.put("VMIUploadResponse", response);
+			    	arr.add(obj);
+			    	
+			    	if(arr!=null){
+			    		for(int i = 0; i<arr.size();i++){
+				  	  		list.add(arr.get(i).toString());
+				  	  	}
+					}
+			    	
+			    }
+					    	
+		    	cleanVMI(vmImageNameNew);
+			
+			
+		}
+		
+		else{
+			System.out.println("User Invalid");
+		}
+				
+		
+		logger__.info(cal.getTime() + " :  " + username + " " + "uploade response of optimized Image  " + vmImageNameNew + "  at storage node" + " " + nodeIdNew + "" + "withi values" + list);
+		return list;
+		
+	}
+	
+	
+	/*
+	 * Not complete yet
+	 * @author : nishant.dps.uibk.ac.at
+	 */
+	
+	@WebMethod
+	public ArrayList<String> reDistribution(byte[] reFile, String reFileName, int bytesRead, long reFileLength) throws org.json.simple.parser.ParseException, URISyntaxException, FileNotFoundException, IOException{
+	  	
+		MessageContext mctx = wsctx.getMessageContext();		
+		Map http_headers = (Map) mctx.get(MessageContext.HTTP_REQUEST_HEADERS);
+			
+		List<String> userLists = (List) http_headers.get("Username");
+		List<String> passLists = (List) http_headers.get("Password");
+		
+		String username = "";
+		String password = "";
+		
+		URI redistributionURI;
+		ArrayList<String> redistributionList = new ArrayList<String>();
+		
+		int sizeStatus = bytesRead;
+		   	 
+    	JSONArray reArr = new JSONArray();
+		
+		if(userLists != null){
+			username = userLists.get(0);
+			
+		}
+		
+		if(passLists != null){
+			password = passLists.get(0);
+			
+		}
+		
+		if(Authenticate(username,password)){
+			
+			long startTime = System.currentTimeMillis();
+	        long elapsedTime = 0L ;
+	        
+	        System.out.println("User Valid");
+	        
+	        
+	        long r = uploadRedistributionFile(reFile, reFileName, bytesRead);
+	        
+			System.out.println("The file length is :" + r);
+			
+			if(r==reFileLength){
+				File file = new File("../../Resources/Redistribution/" + reFileName);
+				
+				JSONParser parser = new JSONParser();
+				
+				
+				try {
+			  		
+			  		Object obj = parser.parse(new FileReader(file));
+					
+					JSONArray arrR = (JSONArray) obj;
+					
+					
+					
+					
+					for(int i = 0; i<arrR.size();i++){
+						
+						
+						
+						JSONObject obj1 = new JSONObject();
+						obj1 = (JSONObject) arrR.get(i);
+						
+			           
+
+			            String vmiName = (String) obj1.get("vmiName");
+			           
+			            
+			            String vmiURI = (String) obj1.get("vmiURI");
+			           
+			            
+			            String sourceId = (String) obj1.get("sourceId");
+			           
+			            
+			            
+			            final URI vmiUri = new URI(vmiURI);
+				  	
+				  		
+				  		final String bucketName = username.toLowerCase() + "-entice";
+			            
+				  		
+				  		downloadVMIViaURI(vmiUri, new File("../../Resources/UPLOAD/" + vmiName));
+				  		deleteUnoptimizedVMI(sourceId,vmiName,username);
+				  		System.out.println("The VMI" + vmiName + " is deleted from old node " + sourceId);
+			
+			            JSONArray destinationId = (JSONArray) obj1.get("destinationId");
+			            Iterator<String> iterator = destinationId.iterator();
+			            
+			            while (iterator.hasNext()) {
+			            	String identifier = iterator.next();
+			                System.out.println("Now uploading on node " + identifier);
+			                
+			                try{
+			  	    			
+			  	    			uploadVMIAsObjectStorage(identifier, vmiName, bucketName);
+			  	    			
+			  	    			elapsedTime = (new Date()).getTime() - startTime;
+			  	  			    long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(elapsedTime);
+			  	  			    JSONObject reObj = new JSONObject();
+			  	    			
+			  	    			if(repoS3.checkifVMIExists(bucketName, vmiName)){
+			  						
+			  						logger__.info(cal.getTime() + " :  " + username + " " + "uploaded optimized Image  " + vmiName +"   successfully in bucket" + " " + bucketName  + "  at storage node" + " " + identifier  );
+			  						
+			  						redistributionURI = repoS3.getFileURI(bucketName, vmiName);
+			  						
+			  						
+			  						reObj.put("StorageNodeId", identifier);				
+			  				    	reObj.put("vmiName", vmiName);
+			  				    	reObj.put("bucketName", bucketName);
+			  				    	reObj.put("vmiredistributionURI", redistributionURI);
+			  				    	
+			  				    	
+			  				    	reObj.put("redistributionTimeInSeconds", timeSeconds);
+			  				    	
+			  				    	reArr.add(reObj);
+			  				    	
+			  				    	
+			  				    	/*
+			  				    	if(arr!=null){
+			  				    		for(int i = 0; i<arr.size();i++){
+			  					  	  		list.add(arr.get(i).toString());
+			  					  	  	}
+			  						}*/
+			  					}
+			  					
+			  					else{
+			  						
+			  						logger__.error(cal.getTime() + " :  " + username + " " + "Failed uploading optimized Image  " + vmiName +"   in bucket" + " " + bucketName  + "  at storage node" + " " + identifier );
+			  				    	
+			  						reObj.put("StorageNodeId", identifier);				
+			  				    	reObj.put("vmiName", vmiName);
+			  				    	reObj.put("bucketName", null);
+			  				    	reObj.put("vmiredistributionURI", null);
+			  				    	reObj.put("redistributionTimeInSeconds", null);
+			  						
+			  						
+			  						//String response = "Upload of Optimized VMI Failed : Please try again ! The problem has been detected and reported.";
+			  				    	//obj.put("VMIUploadResponse", response);
+			  				    	
+			  				    	reArr.add(reObj);
+			  				    	
+			  				    	/*
+			  				    	if(arr!=null){
+			  				    		for(int i = 0; i<arr.size();i++){
+			  					  	  		list.add(arr.get(i).toString());
+			  					  	  	}
+			  						}*/
+			  				    	
+			  				    }
+			  	    			
+			      	            
+			  	    		}catch(Exception e){
+			  	    			e.printStackTrace();
+			  	    		}finally{
+			  	    			//node2.cleanup();
+			  	    		}
+			            }
+			            
+			            cleanVMI(vmiName);
+					
+					
+					} 	
+					
+					cleanFile(reFileName);
+					
+					if(reArr!=null){
+			    		for(int i = 0; i<reArr.size();i++){
+				  	  		redistributionList.add(reArr.get(i).toString());
+				  	  	}
+					}
+
+			  	} catch (FileNotFoundException e) {
+			  		e.printStackTrace();
+			  	} catch (IOException e) {
+			  		e.printStackTrace();
+			  	}
+				
+			}
+			
+			
+
+		  	
+			
+		  	
+		  	
+		}else{
+			System.out.println("User Invalid");
+		}
+		
+		return redistributionList;
+		
+			  		  	
+	  }
+	
+	
+	/*
+	 * <<< A Local Upload Method called for redistribution>>>
+	 * @author : nishant.dps.uibk.ac.at
+	 */
+	
+	public long uploadRedistributionFile(byte[] reFile, String reFileName, int bytesRead){
+		String reFileStoragePath = "../../Resources/Redistribution/" + reFileName;
+		FileOutputStream out = null;
+		File uploadFile = new File(reFileStoragePath);
+			
+		try{
+			
+				out = new FileOutputStream(reFileStoragePath,true);			
+				out.write(reFile,0, bytesRead);	
+				System.out.println("The number of bytes received: " + bytesRead);
+				
+				out.flush();
+				out.close();
+					
+			
+		} catch(IOException e){
+			System.err.println(e);
+			throw new WebServiceException(e);
+		} 
+		System.out.println("The received redistribution File: " + reFileStoragePath);
+		System.out.println("The received file current size: " + uploadFile.length());
+		return uploadFile.length();
+		
+		
+		
+	}
 	
 	
 	
@@ -615,7 +1191,7 @@ public class AddVMIImplementation implements AddVMI{
 	 */
 		
 	public long upload(byte[] vmImage, String vmImageName, int bytesRead){
-		String vmImageStoragePath = "./Resources/UPLOAD/" + vmImageName;
+		String vmImageStoragePath = "../../Resources/UPLOAD/" + vmImageName;
 		FileOutputStream out = null;
 		File uploadFile = new File(vmImageStoragePath);
 			
@@ -647,7 +1223,7 @@ public class AddVMIImplementation implements AddVMI{
 	public void uploadVMIAsObjectStorage(String nodeId, String vmImageName, String username) throws FileNotFoundException, IOException{
 		repoS3 = new NodeCredential(nodeId);
 		try {
-            repoS3.multipartUpload(new File("./Resources/UPLOAD/" + vmImageName), username);
+            repoS3.multipartUpload(new File("../../Resources/UPLOAD/" + vmImageName), username);
             repoS3.getVMIPublicAccess(nodeId, username, vmImageName);
         } catch(Throwable e){
         	
@@ -666,15 +1242,37 @@ public class AddVMIImplementation implements AddVMI{
 	public void deleteUnoptimizedVMI(String nodeId, String vmImageName, String username) throws FileNotFoundException, IOException{
 		
 		repoS3 = new NodeCredential(nodeId);
+		final String bucketName = username.toLowerCase() + "-entice";
 		
 		try{
-			repoS3.deleteVMI(username, vmImageName);
+			repoS3.deleteVMI(bucketName, vmImageName);
 		}catch(Exception e){
 			e.printStackTrace();
 		}finally{
 			repoS3.cleanup();
 		}
 	}
+	
+	
+	/*
+	 * <<< A local method to delete the uploaded redistribution file from local folder >>>
+	 * @author : nishant.dps.uibk.ac.at 
+	 */
+	
+	public void cleanFile(String fileName){
+		
+		String vmImageStoragePath = "../../Resources/Redistribution/" + fileName;
+		FileOutputStream out = null;
+		File previousVMI = new File(vmImageStoragePath);
+		
+		try{
+			previousVMI.delete();		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	
 	
 	/*
 	 * <<< A local method to delete the uploaded VMI as object storage from local folder >>>
@@ -683,7 +1281,7 @@ public class AddVMIImplementation implements AddVMI{
 	
 	public void cleanVMI(String vmImageName){
 		
-		String vmImageStoragePath = "./Resources/UPLOAD/" + vmImageName;
+		String vmImageStoragePath = "../../Resources/UPLOAD/" + vmImageName;
 		FileOutputStream out = null;
 		File previousVMI = new File(vmImageStoragePath);
 		
@@ -770,7 +1368,7 @@ public class AddVMIImplementation implements AddVMI{
 	    		 * <<<Instantiating Look UP Service.>>>
 	    		 */
 	    		
-	        	LookupService cl = new LookupService("./Resources/geo/GeoLiteCity.dat", LookupService.GEOIP_MEMORY_CACHE );   
+	        	LookupService cl = new LookupService("../../Resources/geo/GeoLiteCity.dat", LookupService.GEOIP_MEMORY_CACHE );   
 	        	
 	        	/*
 	        	 * <<<l1 denotes storage location of VMI.>>>
@@ -891,7 +1489,7 @@ public class AddVMIImplementation implements AddVMI{
 		String saltedPassword = SALT + password;
 		String hashedPassword = generateHash(saltedPassword);
 		
-		properties.load(new FileInputStream("./Resources/Repo-Guard-Users.properties"));
+		properties.load(new FileInputStream("../../Resources/Users/Repo-Guard-Users.properties"));
 		
 		for (String key : properties.stringPropertyNames()) {
 			   DB.put(key, properties.get(key).toString());

@@ -65,10 +65,21 @@ public interface AddVMI {
 	public ArrayList<String> getBucketVMIList(String nodeId, String bucketName) throws FileNotFoundException, IOException;
 	
 	@WebMethod
-	public boolean optDistribute(String stage);
+	public boolean optDistribute(String stage, String fragmentIDRedistribute);
 	
 	@WebMethod
 	public ArrayList<String> receiveOptimizedVMImage(URI uri, String vmImageNameOld, String vmImageNameNew, String nodeIdOld, String nodeIdNew) throws FileNotFoundException, IOException, URISyntaxException;
 	
+	@WebMethod
+	public ArrayList<String> uploadOptimizedVMImage(URI uri, String vmImageNameOld, String vmImageNameNew, String nodeIdOld, String nodeIdNew) throws FileNotFoundException, IOException, URISyntaxException;
+	
+	@WebMethod
+	public ArrayList<String> receiveVMImageFragments( byte[] vmImage, String vmImageName, int bytesRead, long vmiLength, String nodeId) throws FileNotFoundException, IOException, URISyntaxException;
+	
+	@WebMethod
+	public ArrayList<String> receiveVMImageFragmentsviaURI(URI uri, String vmImageNameNew, String nodeIdOld, String nodeIdNew) throws FileNotFoundException, IOException, URISyntaxException;
+	
+	@WebMethod
+	public ArrayList<String> reDistribution(byte[] reFile, String reFileName, int bytesRead, long reFileLength) throws org.json.simple.parser.ParseException, URISyntaxException, FileNotFoundException, IOException;
 	
 }

@@ -1,0 +1,7 @@
+http://193.2.72.90:7070/JerseyREST/rest/mo/get_fragment_data
+http://193.2.72.90:7070/JerseyREST/rest/mo/get_all_repositories
+http://193.2.72.90:7070/JerseyREST/rest/mo/get_fragment_history_delivery_data
+0.5
+10
+500
+http://193.2.72.90:7070/JerseyREST/rest/mo/storePareto

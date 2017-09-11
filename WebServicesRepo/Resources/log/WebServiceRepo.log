@@ -1,0 +1,2 @@
+ INFO [pool-1-thread-1] (AddVMIImplementation.java:199) - Mon Sep 11 13:07:43 CEST 2017 :  FLEXIANT enquiring information about storage nodes.
+ INFO [pool-1-thread-1] (AddVMIImplementation.java:251) - Mon Sep 11 13:07:43 CEST 2017 :  FLEXIANT enquiring information about storage nodes.get values[{"StorageNodeId":"1","storageEndpoint":"http:\/\/s3entice.wtelecom.es\/","storageType":"s3"}, {"StorageNodeId":"2","storageEndpoint":"http:\/\/s3.lpds.sztaki.hu\/","storageType":"s3"}]

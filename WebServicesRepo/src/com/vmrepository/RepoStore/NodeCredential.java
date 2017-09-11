@@ -103,7 +103,7 @@ public class NodeCredential {
     public NodeCredential(String nodeId) throws FileNotFoundException, IOException {
     	
     	
-    	props.load(new FileInputStream("./Resources/Credentials/S3Credentials.properties"));
+    	props.load(new FileInputStream("../../Resources/Credentials/S3Credentials.properties"));
 		
 		Map<String,String> db = new HashMap<String,String>();
 		
