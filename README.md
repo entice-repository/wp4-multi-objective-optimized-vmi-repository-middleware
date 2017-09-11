@@ -12,7 +12,7 @@ This is an Individual work package of Entice Repository Middleware with various 
 Pre-requisites :
 
 1. Java 8.
-2. Tomcat 
+2. Tomcat 7 
 3. Eclipse 
 4. S3 compliant storage nodes
 
@@ -46,7 +46,7 @@ Step 6. We need to input S3 storage nodes necessary fields within the properties
 		       "#s3Identity", 
 		       "#s3Credential");
 
-	     (b) The path of S3Credentials.properties is ./Resources/Credentials. 
+	     (b) The path of S3Credentials.properties is ../../Resources/Credentials. 
 	     	 Make sure you run this pice of Java code such that S3 Credentials 
 	     	 are stored in /Resources/S3Credentials.properties.
 
