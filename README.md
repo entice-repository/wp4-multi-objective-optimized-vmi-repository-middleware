@@ -31,7 +31,7 @@ Step 4. Export "WebServicesRepo" project as a .war file : WebServicesRepo.war an
         (Include all the necessary libraries and dependencies while exporting war file.) 
 
 Step 5. Copy the Resources folder from /wp4-multi-objective-optimized-vmi-repository-middleware/Resources/ 
-        to the folder where Tomcat folder exists.
+        to the folder outside the Tomcat folder exists.
 
 Step 6. We need to input S3 storage nodes necessary fields within the properties file inside 
         /wp4-multi-objective-optimized-vmi-repository-middleware/Resources/S3Credentials.properties. 
