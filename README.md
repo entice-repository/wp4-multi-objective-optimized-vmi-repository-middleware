@@ -9,6 +9,8 @@ This is an Individual work package of Entice Repository Middleware with various 
 6. Querying the VM Images details stored at storage node inside a particular container/bucket.
 7. VMI Redistributiion 
 8. VMI Interoperability : Download the VMIInteroperabilitySoftware.zip : Uncompress and read instructions to run it.
+
+
 Every functionality has been covered
 
 Pre-requisites :
@@ -17,6 +19,7 @@ Pre-requisites :
 2. Tomcat 7 
 3. Eclipse 
 4. S3 compliant storage nodes
+5. QEMU
 
 
 Flowchart to deploy wp4-multi-objective-optimized-vmi-repository-middleware :
