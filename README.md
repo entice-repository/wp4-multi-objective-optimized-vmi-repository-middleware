@@ -8,6 +8,7 @@ This is an Individual work package of Entice Repository Middleware with various 
 5. Querying the S3 container/bucket details at a particular Storage Node using its ID
 6. Querying the VM Images details stored at storage node inside a particular container/bucket.
 7. VMI Redistributiion 
+8. VMI Interoperability : Download the VMIInteroperabilitySoftware.zip : Uncompress and read instructions to run it.
 Every functionality has been covered
 
 Pre-requisites :
